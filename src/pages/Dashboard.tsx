@@ -1,0 +1,81 @@
+
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { getLeads } from '@/utils/api';
+import { Lead } from '@/types';
+import Header from '@/components/Header';
+import LeadTable from '@/components/LeadTable';
+import { Button } from '@/components/ui/button';
+import { RefreshCw } from 'lucide-react';
+
+const Dashboard = () => {
+  const { firmId } = useParams<{ firmId: string }>();
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  if (!firmId) {
+    return <div>Law firm not found</div>;
+  }
+
+  // Function to fetch leads
+  const fetchLeads = async () => {
+    try {
+      setIsLoading(true);
+      const data = await getLeads(firmId);
+      setLeads(data);
+    } catch (error) {
+      console.error("Error fetching leads:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Function to refresh leads
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchLeads();
+    setTimeout(() => setIsRefreshing(false), 500); // Ensure the spinner shows for at least 500ms
+  };
+
+  // Fetch leads on component mount
+  useEffect(() => {
+    fetchLeads();
+  }, [firmId]);
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header firmId={firmId} />
+      
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16">
+        <div className="max-w-6xl mx-auto space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-fade-up">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">
+                Lead Dashboard
+              </h1>
+              <p className="text-muted-foreground mt-1">
+                View and manage all your client leads in one place
+              </p>
+            </div>
+            
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex items-center gap-2 self-start"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+            >
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
+          
+          <LeadTable leads={leads} isLoading={isLoading} />
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default Dashboard;
