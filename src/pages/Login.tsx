@@ -1,0 +1,148 @@
+
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { toast } from "@/hooks/use-toast";
+
+const loginSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(1, "Please enter your password"),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
+
+const Login = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  const onSubmit = async (data: LoginFormValues) => {
+    setIsSubmitting(true);
+    try {
+      // In a real app, this would send data to an API
+      console.log("Login data:", data);
+      
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      
+      toast({
+        title: "Logged in successfully",
+      });
+      
+      // For demo, we'll just redirect to lawfirm1
+      window.location.href = "/lawfirm1/back";
+    } catch (error) {
+      console.error("Error logging in:", error);
+      toast({
+        title: "Error",
+        description: "Invalid email or password. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      <header className="w-full border-b border-border py-4">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+          <Link to="/" className="flex items-center space-x-2">
+            <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
+              <span className="text-white font-semibold text-sm">LS</span>
+            </div>
+            <span className="font-medium text-lg tracking-tight">LawScheduling</span>
+          </Link>
+        </div>
+      </header>
+
+      <main className="flex-1 flex items-center justify-center py-12">
+        <div className="w-full max-w-sm px-4">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold">Welcome back</h1>
+            <p className="text-muted-foreground mt-2">
+              Log in to your account
+            </p>
+          </div>
+
+          <div className="bg-card p-6 rounded-lg shadow-md border border-border">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="you@example.com" 
+                          type="email" 
+                          autoComplete="email"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Password</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="Enter your password" 
+                          type="password" 
+                          autoComplete="current-password"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? "Logging in..." : "Log in"}
+                </Button>
+              </form>
+            </Form>
+
+            <div className="mt-6 text-center text-sm">
+              <p className="text-muted-foreground">
+                Don't have an account?{" "}
+                <Link to="/signup" className="text-primary hover:underline">
+                  Sign up
+                </Link>
+              </p>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default Login;
