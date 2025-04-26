@@ -39,6 +39,7 @@ const IntakeForm: React.FC<IntakeFormProps> = ({ lawFirmId }) => {
     
     try {
       setIsSubmitting(true);
+      // Pass the lawFirmId to ensure the lead is associated with the correct firm
       const result = await submitLead(formData, lawFirmId);
       
       if (!result) {

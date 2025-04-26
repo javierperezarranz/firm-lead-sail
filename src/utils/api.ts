@@ -10,7 +10,9 @@ import {
   AreaOfLaw,
   FirmMailSetting,
   FirmMailLaw,
-  LeadWithResponses
+  LeadWithResponses,
+  MockLawFirmWithDetails,
+  SignupFormData
 } from "@/types";
 
 // Mock database based on the new schema
