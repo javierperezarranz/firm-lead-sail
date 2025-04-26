@@ -31,35 +31,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-const AppRoutes = () => {
-  const { session } = useAuth();
-  
-  return (
-    <Routes>
-      {/* Public routes */}
-      <Route path="/" element={<Index />} />
-      <Route path="/auth" element={!session ? <Auth /> : <Navigate to="/" replace />} />
-      <Route path="/login" element={!session ? <Login /> : <Navigate to="/" replace />} />
-      <Route path="/signup" element={!session ? <SignUp /> : <Navigate to="/" replace />} />
-      
-      {/* Law firm public pages */}
-      <Route path="/:firmId" element={<LawFirmHome />} />
-      <Route path="/:firmId/intake" element={<Intake />} />
-      
-      {/* Protected routes */}
-      <Route path="/manage" element={<ProtectedRoute><ManageFirms /></ProtectedRoute>} />
-      <Route path="/:firmId/back" element={<ProtectedRoute><BackOffice /></ProtectedRoute>}>
-        <Route index element={<Leads />} />
-        <Route path="leads" element={<Leads />} />
-        <Route path="account" element={<AccountSettings />} />
-      </Route>
-      
-      {/* Catch any unknown routes */}
-      <Route path="*" element={<NotFound />} />
-    </Routes>
-  );
-};
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <BrowserRouter>
@@ -67,7 +38,28 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <AppRoutes />
+          <Routes>
+            {/* Public routes */}
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Navigate to="/login" replace />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<SignUp />} />
+            
+            {/* Law firm public pages */}
+            <Route path="/:firmId" element={<LawFirmHome />} />
+            <Route path="/:firmId/intake" element={<Intake />} />
+            
+            {/* Protected routes */}
+            <Route path="/manage" element={<ProtectedRoute><ManageFirms /></ProtectedRoute>} />
+            <Route path="/:firmId/back" element={<ProtectedRoute><BackOffice /></ProtectedRoute>}>
+              <Route index element={<Leads />} />
+              <Route path="leads" element={<Leads />} />
+              <Route path="account" element={<AccountSettings />} />
+            </Route>
+            
+            {/* Catch any unknown routes */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </TooltipProvider>
       </AuthProvider>
     </BrowserRouter>
