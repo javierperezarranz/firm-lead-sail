@@ -3,14 +3,13 @@ import React from 'react';
 import { Outlet, useNavigate, useParams } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
 import Sidebar from '@/components/Sidebar';
-import { getLawFirmBySlug } from '@/utils/api';
+import { getLawFirmBySlug } from '@/utils/api-supabase';
 
 const BackOffice = () => {
   const { firmId } = useParams<{ firmId: string }>();
   const { toast } = useToast();
   const navigate = useNavigate();
   
-  // In a real app, we would check if the firm exists here
   React.useEffect(() => {
     const checkFirmExists = async () => {
       if (!firmId) {

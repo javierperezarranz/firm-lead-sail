@@ -9,9 +9,10 @@ import { useAuth } from "@/lib/auth";
 import Index from "./pages/Index";
 import LawFirmHome from "./pages/LawFirmHome";
 import Intake from "./pages/Intake";
-import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
+import Login from "./pages/Login";
+import SignUp from "./pages/SignUp";
 import BackOffice from "./pages/BackOffice";
 import Leads from "./pages/Leads";
 import AccountSettings from "./pages/AccountSettings";
@@ -38,6 +39,8 @@ const AppRoutes = () => {
       {/* Public routes */}
       <Route path="/" element={<Index />} />
       <Route path="/auth" element={!session ? <Auth /> : <Navigate to="/" replace />} />
+      <Route path="/login" element={!session ? <Login /> : <Navigate to="/" replace />} />
+      <Route path="/signup" element={!session ? <SignUp /> : <Navigate to="/" replace />} />
       
       {/* Law firm public pages */}
       <Route path="/:firmId" element={<LawFirmHome />} />
@@ -51,6 +54,7 @@ const AppRoutes = () => {
         <Route path="account" element={<AccountSettings />} />
       </Route>
       
+      {/* Catch any unknown routes */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

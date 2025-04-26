@@ -1,9 +1,10 @@
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { supabase } from '@/integrations/supabase/client';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +15,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { connectUserToLawFirm } from '@/utils/api-supabase';
 
 const signUpSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -32,6 +34,8 @@ const signUpSchema = z.object({
 type SignUpFormValues = z.infer<typeof signUpSchema>;
 
 const SignUp = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<SignUpFormValues>({
@@ -46,26 +50,49 @@ const SignUp = () => {
   const onSubmit = async (data: SignUpFormValues) => {
     setIsSubmitting(true);
     try {
-      // In a real app, this would send data to an API
-      console.log("Sign up data:", data);
-      
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      
-      toast({
-        title: "Account created!",
-        description: "You've successfully signed up.",
+      // Register the user with Supabase
+      const { data: authData, error } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          emailRedirectTo: window.location.origin,
+        }
       });
       
-      // Redirect to back office
-      window.location.href = `/${data.firmName}/back`;
-    } catch (error) {
+      if (error) throw error;
+      
+      if (authData.user) {
+        // Connect the user to the law firm
+        const success = await connectUserToLawFirm(authData.user.id, data.firmName);
+        
+        if (!success) {
+          throw new Error("Failed to create law firm. Please try again.");
+        }
+        
+        toast({
+          title: "Account created!",
+          description: "You've successfully signed up. You can now log in.",
+        });
+        
+        // Redirect to login page
+        navigate('/login');
+      }
+    } catch (error: any) {
       console.error("Error signing up:", error);
-      toast({
-        title: "Error",
-        description: "There was a problem creating your account. Please try again.",
-        variant: "destructive",
-      });
+      
+      if (error.message.includes('already registered')) {
+        toast({
+          title: "Email already in use",
+          description: "This email is already registered. Please log in or use a different email.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }

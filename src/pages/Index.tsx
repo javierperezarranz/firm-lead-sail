@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, CheckCircle2, HelpCircle, Mail } from 'lucide-react';
+import { ArrowRight, CheckCircle2, HelpCircle } from 'lucide-react';
 
 const Index = () => {
   return (

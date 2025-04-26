@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FormData } from '@/types';
@@ -39,7 +39,8 @@ const IntakeForm: React.FC<IntakeFormProps> = ({ lawFirmId }) => {
     
     try {
       setIsSubmitting(true);
-      // Pass the lawFirmId to ensure the lead is associated with the correct firm
+      console.log(`Submitting lead for firm: ${lawFirmId}`, formData);
+      
       const result = await submitLead(formData, lawFirmId);
       
       if (!result) {
