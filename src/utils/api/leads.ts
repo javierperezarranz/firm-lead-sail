@@ -81,12 +81,12 @@ export const submitLead = async (data: FormData, firmSlug: string): Promise<Lead
     // Create the lead
     const { data: newLead, error: leadError } = await supabase
       .from('leads')
-      .insert([{
+      .insert({
         law_firm_id: firm.id,
         name: data.name,
         email: data.email,
         phone: data.phone
-      }])
+      })
       .select()
       .single();
     
