@@ -46,17 +46,31 @@ const Auth = () => {
     
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        const { error, data } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo: window.location.origin, // Use current origin
+          },
         });
         
         if (error) throw error;
         
-        toast({
-          title: "Account created successfully",
-          description: "Check your email for the confirmation link.",
-        });
+        if (data.user?.identities?.length === 0) {
+          toast({
+            title: "Account already exists",
+            description: "Please log in instead.",
+            variant: "destructive",
+          });
+          setIsSignUp(false);
+        } else {
+          toast({
+            title: "Account created successfully",
+            description: "You can now log in.",
+          });
+          // Auto-switch to login form after successful signup
+          setIsSignUp(false);
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -68,16 +82,32 @@ const Auth = () => {
         toast({
           title: "Logged in successfully",
         });
+        
+        navigate('/');
       }
-      
-      navigate('/');
     } catch (error: any) {
       console.error('Auth error:', error);
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      
+      // Handle specific error cases
+      if (error.message.includes('Email not confirmed')) {
+        toast({
+          title: "Email not confirmed",
+          description: "Please check your inbox and confirm your email before logging in.",
+          variant: "destructive",
+        });
+      } else if (error.message.includes('Invalid login')) {
+        toast({
+          title: "Invalid credentials",
+          description: "Please check your email and password and try again.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
