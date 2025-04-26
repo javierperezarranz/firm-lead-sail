@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -5,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/components/AuthProvider";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ManageRoute } from "@/components/ManageRoute";
 import { useAuth } from "@/lib/auth";
 import Index from "./pages/Index";
 import LawFirmHome from "./pages/LawFirmHome";
@@ -39,7 +41,7 @@ const App = () => (
             <Route path="/:firmId/intake" element={<Intake />} />
             
             {/* Protected routes */}
-            <Route path="/manage" element={<ProtectedRoute><ManageFirms /></ProtectedRoute>} />
+            <Route path="/manage" element={<ManageRoute><ManageFirms /></ManageRoute>} />
             <Route path="/:firmId/back" element={<ProtectedRoute><BackOffice /></ProtectedRoute>}>
               <Route index element={<Leads />} />
               <Route path="leads" element={<Leads />} />

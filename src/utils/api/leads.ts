@@ -71,31 +71,60 @@ export const getLeadsWithResponses = async (firmSlug: string): Promise<LeadWithR
 export const submitLead = async (data: FormData, firmSlug: string): Promise<Lead | null> => {
   console.log(`Submitting lead for ${firmSlug}:`, data);
   
-  const firm = await getLawFirmBySlug(firmSlug);
-  if (!firm) return null;
-  
-  const { data: newLead, error } = await supabase
-    .from('leads')
-    .insert([{
-      law_firm_id: firm.id,
-      name: data.name,
-      email: data.email,
-      phone: data.phone
-    }])
-    .select()
-    .single();
-  
-  if (error) {
-    console.error('Error creating lead:', error);
+  try {
+    const firm = await getLawFirmBySlug(firmSlug);
+    if (!firm) {
+      console.error(`Law firm not found with slug: ${firmSlug}`);
+      return null;
+    }
+    
+    // Create the lead
+    const { data: newLead, error: leadError } = await supabase
+      .from('leads')
+      .insert([{
+        law_firm_id: firm.id,
+        name: data.name,
+        email: data.email,
+        phone: data.phone
+      }])
+      .select()
+      .single();
+    
+    if (leadError) {
+      console.error('Error creating lead:', leadError);
+      return null;
+    }
+    
+    // Extract any additional fields for intake responses
+    const { name, email, phone, ...additionalFields } = data;
+    
+    // If there are additional fields, add them as intake responses
+    if (Object.keys(additionalFields).length > 0) {
+      const intakeResponses = Object.entries(additionalFields).map(([key, value]) => ({
+        lead_id: newLead.id,
+        question_key: key,
+        answer: String(value)
+      }));
+      
+      const { error: responseError } = await supabase
+        .from('intake_responses')
+        .insert(intakeResponses);
+      
+      if (responseError) {
+        console.error('Error creating intake responses:', responseError);
+      }
+    }
+    
+    return {
+      id: newLead.id,
+      lawFirmId: newLead.law_firm_id,
+      name: newLead.name,
+      email: newLead.email,
+      phone: newLead.phone || '',
+      submittedAt: newLead.submitted_at
+    };
+  } catch (error) {
+    console.error('Error in submitLead:', error);
     return null;
   }
-  
-  return {
-    id: newLead.id,
-    lawFirmId: newLead.law_firm_id,
-    name: newLead.name,
-    email: newLead.email,
-    phone: newLead.phone || '',
-    submittedAt: newLead.submitted_at
-  };
 };

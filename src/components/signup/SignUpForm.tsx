@@ -14,9 +14,8 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { toast as sonnerToast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { signupUserWithLawFirm } from '@/utils/api/auth';
 import { SignUpFormValues, signUpSchema } from "@/validations/signupSchema";
-import { checkFirmExists, createLawFirm } from "@/services/signupService";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -38,29 +37,7 @@ export const SignUpForm = () => {
     setIsSubmitting(true);
     
     try {
-      const firmExists = await checkFirmExists(data.firmName);
-      
-      if (firmExists) {
-        throw new Error("This firm name is already taken. Please choose a different one.");
-      }
-      
-      const { data: authData, error } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-        options: {
-          emailRedirectTo: window.location.origin,
-        }
-      });
-      
-      if (error) throw error;
-      
-      if (!authData.user) {
-        throw new Error("Failed to create user account. Please try again.");
-      }
-
-      console.log("User created successfully:", authData.user.id);
-      
-      await createLawFirm(data.firmName, data.firmName, authData.user.id);
+      await signupUserWithLawFirm(data.email, data.password, data.firmName);
       
       toast({
         title: "Account created!",

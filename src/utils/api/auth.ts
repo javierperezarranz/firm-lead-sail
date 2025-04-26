@@ -63,3 +63,82 @@ export async function checkUserHasAccess(userId: string, firmSlug: string): Prom
     return false;
   }
 }
+
+export async function signupUserWithLawFirm(email: string, password: string, firmName: string) {
+  try {
+    // Create a slug from the firm name
+    const firmSlug = firmName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    
+    // Check if the firm slug is already taken
+    const { data: existingFirm, error: firmCheckError } = await supabase
+      .from('law_firms')
+      .select('id')
+      .eq('slug', firmSlug)
+      .maybeSingle();
+      
+    if (firmCheckError) throw firmCheckError;
+    
+    if (existingFirm) {
+      throw new Error('This firm name is already taken. Please choose a different one.');
+    }
+    
+    // Start signup process
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: window.location.origin,
+      }
+    });
+
+    if (signUpError) throw signUpError;
+    
+    if (!signUpData.user) {
+      throw new Error('Failed to create user account. Please try again.');
+    }
+    
+    // Use RPC to perform operations in a transaction
+    const { data: result, error: rpcError } = await supabase.rpc('create_law_firm_with_user', {
+      p_user_id: signUpData.user.id,
+      p_firm_name: firmName,
+      p_firm_slug: firmSlug,
+      p_email: email
+    });
+    
+    if (rpcError) throw rpcError;
+    
+    // Add user role
+    const { error: roleError } = await supabase
+      .from('user_roles')
+      .insert({
+        user_id: signUpData.user.id,
+        role: 'user'
+      });
+    
+    if (roleError) console.error("Role creation error:", roleError);
+    
+    return { 
+      user: signUpData.user, 
+      firmSlug: firmSlug 
+    };
+  } catch (error) {
+    console.error("Signup error:", error);
+    throw error;
+  }
+}
+
+export async function isUserAdmin(userId: string): Promise<boolean> {
+  try {
+    const { data, error } = await supabase
+      .from('user_roles')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('role', 'admin')
+      .maybeSingle();
+    
+    return !error && !!data;
+  } catch (error) {
+    console.error("Admin check error:", error);
+    return false;
+  }
+}
