@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { FormData, Lead, LeadWithResponses } from "@/types";
 import { getLawFirmBySlug } from "./law-firms";
@@ -78,14 +77,15 @@ export const submitLead = async (data: FormData, firmSlug: string): Promise<Lead
       return null;
     }
     
-    // Create the lead
+    // Create the lead with public insert policy
     const { data: newLead, error: leadError } = await supabase
       .from('leads')
       .insert({
         law_firm_id: firm.id,
         name: data.name,
         email: data.email,
-        phone: data.phone
+        phone: data.phone || null,
+        submitted_at: new Date().toISOString()
       })
       .select()
       .single();
