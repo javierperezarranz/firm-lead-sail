@@ -7,7 +7,7 @@ import { z } from "zod";
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import {
   Form,
   FormControl,
@@ -26,6 +26,7 @@ type AuthFormValues = z.infer<typeof authSchema>;
 
 const Auth = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
 
@@ -39,17 +40,36 @@ const Auth = () => {
 
   const onSubmit = async (data: AuthFormValues) => {
     setIsLoading(true);
+    
+    // Ensure that email and password are defined and non-empty
+    const { email, password } = data;
+    
     try {
-      const { error } = isSignUp 
-        ? await supabase.auth.signUp(data)
-        : await supabase.auth.signInWithPassword(data);
-
-      if (error) throw error;
-
-      toast({
-        title: isSignUp ? "Account created successfully" : "Logged in successfully",
-      });
-
+      if (isSignUp) {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+        
+        if (error) throw error;
+        
+        toast({
+          title: "Account created successfully",
+          description: "Check your email for the confirmation link.",
+        });
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        
+        if (error) throw error;
+        
+        toast({
+          title: "Logged in successfully",
+        });
+      }
+      
       navigate('/');
     } catch (error: any) {
       console.error('Auth error:', error);
