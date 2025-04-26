@@ -28,7 +28,6 @@ const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
 
   const form = useForm<AuthFormValues>({
     resolver: zodResolver(authSchema),
@@ -41,28 +40,20 @@ const Auth = () => {
   const onSubmit = async (data: AuthFormValues) => {
     setIsLoading(true);
     
-    // Ensure that email and password are defined and non-empty
-    const { email, password } = data;
-    
     try {
-      if (isSignUp) {
-        // Redirect to the dedicated signup page instead
-        navigate('/signup');
-        return;
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        
-        if (error) throw error;
-        
-        toast({
-          title: "Logged in successfully",
-        });
-        
-        navigate('/');
-      }
+      const { error } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Logged in successfully",
+      });
+      
+      navigate('/');
+      
     } catch (error: any) {
       console.error('Auth error:', error);
       
@@ -100,9 +91,9 @@ const Auth = () => {
       <main className="flex-1 flex items-center justify-center py-12">
         <div className="w-full max-w-md px-4">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold">{isSignUp ? 'Create an account' : 'Welcome back'}</h1>
+            <h1 className="text-3xl font-bold">Welcome back</h1>
             <p className="text-muted-foreground mt-2">
-              {isSignUp ? 'Sign up to get started' : 'Log in to your account'}
+              Log in to your account
             </p>
           </div>
 
@@ -138,7 +129,7 @@ const Auth = () => {
                         <Input 
                           placeholder="Enter your password" 
                           type="password" 
-                          autoComplete={isSignUp ? "new-password" : "current-password"}
+                          autoComplete="current-password"
                           {...field} 
                         />
                       </FormControl>
@@ -148,23 +139,20 @@ const Auth = () => {
                 />
 
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading 
-                    ? (isSignUp ? "Creating account..." : "Logging in...") 
-                    : (isSignUp ? "Sign up" : "Log in")
-                  }
+                  {isLoading ? "Logging in..." : "Log in"}
                 </Button>
               </form>
             </Form>
 
             <div className="mt-6 text-center text-sm">
               <p className="text-muted-foreground">
-                {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
+                Don't have an account?{" "}
                 <Button
                   onClick={handleSignUpClick}
                   className="text-primary hover:underline p-0 h-auto bg-transparent"
                   variant="link"
                 >
-                  {isSignUp ? "Log in" : "Sign up"}
+                  Sign up
                 </Button>
               </p>
             </div>
