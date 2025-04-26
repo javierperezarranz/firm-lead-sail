@@ -354,7 +354,7 @@ export type Database = {
         Returns: boolean
       }
       user_belongs_to_law_firm: {
-        Args: { user_id: string; firm_id: number }
+        Args: { auth_user_id: string; in_law_firm_id: number }
         Returns: boolean
       }
     }
