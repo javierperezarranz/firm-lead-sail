@@ -15,11 +15,34 @@ import {
   SignupFormData
 } from "@/types";
 
+// Helper function to initialize data from localStorage or default values
+const initializeData = <T>(key: string, defaultValue: T): T => {
+  const storedData = localStorage.getItem(key);
+  if (storedData) {
+    try {
+      return JSON.parse(storedData);
+    } catch (e) {
+      console.error(`Error parsing ${key} from localStorage:`, e);
+      return defaultValue;
+    }
+  }
+  return defaultValue;
+};
+
+// Helper function to save data to localStorage
+const saveData = <T>(key: string, data: T): void => {
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (e) {
+    console.error(`Error saving ${key} to localStorage:`, e);
+  }
+};
+
 // Mock database based on the new schema
-// These are in-memory objects that simulate a relational database
+// These are initialized from localStorage if available, otherwise use defaults
 
 // Law Firms table
-const lawFirms: LawFirm[] = [
+const lawFirms: LawFirm[] = initializeData('lawFirms', [
   {
     id: 1,
     name: "Law Firm 1",
@@ -32,10 +55,10 @@ const lawFirms: LawFirm[] = [
     slug: "lawfirm2",
     createdAt: "2023-06-12T10:00:00Z"
   }
-];
+]);
 
 // Leads table
-const leads: Lead[] = [
+const leads: Lead[] = initializeData('leads', [
   {
     id: 1,
     lawFirmId: 1,
@@ -60,10 +83,10 @@ const leads: Lead[] = [
     phone: "555-2001",
     submittedAt: "2023-06-17T09:15:00Z"
   }
-];
+]);
 
 // Intake Responses table
-const intakeResponses: IntakeResponse[] = [
+const intakeResponses: IntakeResponse[] = initializeData('intakeResponses', [
   {
     id: 1,
     leadId: 1,
@@ -88,10 +111,10 @@ const intakeResponses: IntakeResponse[] = [
     questionKey: "case_type",
     answer: "Real Estate Purchase"
   }
-];
+]);
 
 // Account Settings table
-const accountSettings: AccountSettings[] = [
+const accountSettings: AccountSettings[] = initializeData('accountSettings', [
   {
     id: 1,
     lawFirmId: 1,
@@ -108,19 +131,19 @@ const accountSettings: AccountSettings[] = [
     profileImage: null,
     updatedAt: "2023-06-12T10:00:00Z"
   }
-];
+]);
 
 // States table
-const states: State[] = [
+const states: State[] = initializeData('states', [
   { id: 1, name: "Florida" },
   { id: 2, name: "California" },
   { id: 3, name: "New York" },
   { id: 4, name: "Texas" },
   { id: 5, name: "Illinois" },
-];
+]);
 
 // Counties table
-const counties: County[] = [
+const counties: County[] = initializeData('counties', [
   { id: 1, stateId: 1, name: "Miami-Dade" },
   { id: 2, stateId: 1, name: "Broward" },
   { id: 3, stateId: 1, name: "Palm Beach" },
@@ -136,18 +159,18 @@ const counties: County[] = [
   { id: 13, stateId: 5, name: "Cook" },
   { id: 14, stateId: 5, name: "DuPage" },
   { id: 15, stateId: 5, name: "Lake" }
-];
+]);
 
 // Areas of Law table
-const areasOfLaw: AreaOfLaw[] = [
+const areasOfLaw: AreaOfLaw[] = initializeData('areasOfLaw', [
   { id: 1, name: "Family" },
   { id: 2, name: "Criminal" },
   { id: 3, name: "Real Estate" },
   { id: 4, name: "Marriage" }
-];
+]);
 
 // Firm Mail Settings table
-const firmMailSettings: FirmMailSetting[] = [
+const firmMailSettings: FirmMailSetting[] = initializeData('firmMailSettings', [
   {
     id: 1,
     firmId: 1,
@@ -155,13 +178,13 @@ const firmMailSettings: FirmMailSetting[] = [
     countyId: 1,
     createdAt: "2023-06-15T10:30:00Z"
   }
-];
+]);
 
 // Firm Mail Laws table
-const firmMailLaws: FirmMailLaw[] = [
+const firmMailLaws: FirmMailLaw[] = initializeData('firmMailLaws', [
   { id: 1, mailSettingId: 1, areaOfLawId: 1 }, // Family law for Firm 1, Miami-Dade
   { id: 2, mailSettingId: 1, areaOfLawId: 2 }  // Criminal law for Firm 1, Miami-Dade
-];
+]);
 
 // Helper function to find a law firm by slug
 export const getLawFirmBySlug = async (slug: string): Promise<LawFirm | null> => {
@@ -217,6 +240,9 @@ export const submitLead = async (data: FormData, firmSlug: string): Promise<Lead
   
   // Add to our mock database
   leads.push(newLead);
+  
+  // Save updated leads to localStorage
+  saveData('leads', leads);
   
   return newLead;
 };
@@ -300,6 +326,7 @@ export const addFirmMailSetting = async (
   };
   
   firmMailSettings.push(newSetting);
+  saveData('firmMailSettings', firmMailSettings);
   
   // Add the areas of law
   areaIds.forEach(areaId => {
@@ -309,6 +336,7 @@ export const addFirmMailSetting = async (
       areaOfLawId: areaId
     });
   });
+  saveData('firmMailLaws', firmMailLaws);
   
   return newSetting;
 };
@@ -406,6 +434,7 @@ export const signupUser = async (data: SignupFormData): Promise<{ lawFirmSlug: s
   };
   
   lawFirms.push(newFirm);
+  saveData('lawFirms', lawFirms);
   
   // Create account settings
   const newAccount: AccountSettings = {
@@ -418,6 +447,7 @@ export const signupUser = async (data: SignupFormData): Promise<{ lawFirmSlug: s
   };
   
   accountSettings.push(newAccount);
+  saveData('accountSettings', accountSettings);
   
   return { lawFirmSlug: newFirm.slug };
 };
