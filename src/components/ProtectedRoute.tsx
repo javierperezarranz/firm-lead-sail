@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { checkUserHasAccess } from '@/utils/api/auth';
+import { useToast } from "@/hooks/use-toast";
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
@@ -10,11 +11,17 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const { firmId } = useParams<{ firmId: string }>();
   const { user } = useAuth();
+  const { toast } = useToast();
   
   useEffect(() => {
     async function checkAccess() {
       try {
         if (!user || !firmId) {
+          toast({
+            title: "Authentication required",
+            description: "You need to log in first",
+            variant: "destructive",
+          });
           navigate('/login');
           return;
         }
@@ -24,10 +31,20 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
         if (hasAccess) {
           setAuthorized(true);
         } else {
+          toast({
+            title: "Access denied",
+            description: "You don't have permission to access this area",
+            variant: "destructive",
+          });
           navigate('/login');
         }
       } catch (error) {
         console.error('Authorization error:', error);
+        toast({
+          title: "Authorization error",
+          description: "Could not verify your permissions",
+          variant: "destructive",
+        });
         navigate('/login');
       } finally {
         setLoading(false);
@@ -35,7 +52,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     }
     
     checkAccess();
-  }, [navigate, firmId, user]);
+  }, [navigate, firmId, user, toast]);
   
   if (loading) {
     return (

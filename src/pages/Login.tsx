@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -16,6 +17,7 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { loginUser } from '@/utils/api/auth';
+import { useAuth } from '@/lib/auth';
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -28,6 +30,47 @@ const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user } = useAuth();
+
+  // If already logged in, check to redirect to appropriate dashboard
+  useEffect(() => {
+    const checkLoggedInUser = async () => {
+      if (user) {
+        try {
+          // Get the user's associated law firm
+          const { data: firmUsers, error: firmUsersError } = await supabase
+            .from('law_firm_users')
+            .select('law_firm_id')
+            .eq('user_id', user.id)
+            .single();
+            
+          if (firmUsersError) {
+            console.error("Error fetching user's firm:", firmUsersError);
+            return;
+          }
+          
+          // Get the law firm slug for redirection
+          const { data: firmData, error: firmError } = await supabase
+            .from('law_firms')
+            .select('slug')
+            .eq('id', firmUsers.law_firm_id)
+            .single();
+            
+          if (firmError) {
+            console.error("Error fetching firm data:", firmError);
+            return;
+          }
+          
+          // Redirect to their dashboard
+          navigate(`/${firmData.slug}/back`);
+        } catch (error) {
+          console.error("Error redirecting logged in user:", error);
+        }
+      }
+    };
+    
+    checkLoggedInUser();
+  }, [user, navigate]);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -50,7 +93,7 @@ const Login = () => {
     } catch (error: any) {
       console.error("Error logging in:", error);
       
-      if (error.message.includes('Invalid login')) {
+      if (error.message?.includes('Invalid login')) {
         toast({
           title: "Invalid credentials",
           description: "Please check your email and password and try again.",
@@ -59,7 +102,7 @@ const Login = () => {
       } else {
         toast({
           title: "Error",
-          description: error.message,
+          description: error.message || "An error occurred during login",
           variant: "destructive",
         });
       }
