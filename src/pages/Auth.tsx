@@ -52,7 +52,7 @@ const Auth = () => {
         title: "Logged in successfully",
       });
       
-      navigate('/');
+      navigate('/manage');
       
     } catch (error: any) {
       console.error('Auth error:', error);

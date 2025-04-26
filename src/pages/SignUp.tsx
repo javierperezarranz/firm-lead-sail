@@ -67,6 +67,59 @@ const SignUp = () => {
     }
   };
 
+  const createLawFirm = async (name: string, slug: string, userId: string) => {
+    try {
+      // Create the law firm
+      const { data: firmData, error: firmError } = await supabase
+        .from('law_firms')
+        .insert([
+          { name, slug }
+        ])
+        .select('id')
+        .single();
+      
+      if (firmError) {
+        console.error("Error creating law firm:", firmError);
+        throw new Error("Failed to create law firm. Please try again.");
+      }
+      
+      console.log("Law firm created successfully:", firmData.id);
+      
+      // Connect user to the law firm
+      const { error: connectionError } = await supabase
+        .from('law_firm_users')
+        .insert([
+          { user_id: userId, law_firm_id: firmData.id }
+        ]);
+      
+      if (connectionError) {
+        console.error("Error connecting user to law firm:", connectionError);
+        throw new Error("Failed to connect user to law firm. Please try again.");
+      }
+      
+      // Create account settings for the law firm with the user's email
+      const { error: settingsError } = await supabase
+        .from('account_settings')
+        .insert([
+          { 
+            email: form.getValues('email'), 
+            law_firm_id: firmData.id,
+            password_hash: 'placeholder' // This would typically be handled securely
+          }
+        ]);
+      
+      if (settingsError) {
+        console.error("Error creating account settings:", settingsError);
+        // Continue anyway, not critical
+      }
+      
+      return firmData.id;
+    } catch (error) {
+      console.error("Error creating law firm:", error);
+      throw error;
+    }
+  };
+
   const onSubmit = async (data: SignUpFormValues) => {
     setIsSubmitting(true);
     
@@ -95,51 +148,8 @@ const SignUp = () => {
 
       console.log("User created successfully:", authData.user.id);
       
-      // Create the law firm
-      const { data: firmData, error: firmError } = await supabase
-        .from('law_firms')
-        .insert([
-          { name: data.firmName, slug: data.firmName }
-        ])
-        .select('id')
-        .single();
-      
-      if (firmError) {
-        console.error("Error creating law firm:", firmError);
-        throw new Error("Failed to create law firm. Please try again.");
-      }
-      
-      console.log("Law firm created successfully:", firmData.id);
-      
-      // Connect user to the law firm
-      const { error: connectionError } = await supabase
-        .from('law_firm_users')
-        .insert([
-          { user_id: authData.user.id, law_firm_id: firmData.id }
-        ]);
-      
-      if (connectionError) {
-        console.error("Error connecting user to law firm:", connectionError);
-        throw new Error("Failed to connect user to law firm. Please try again.");
-      }
-      
-      // Create account settings for the law firm with the user's email
-      const { error: settingsError } = await supabase
-        .from('account_settings')
-        .insert([
-          { 
-            email: data.email, 
-            law_firm_id: firmData.id,
-            password_hash: 'placeholder' // This would typically be handled securely
-          }
-        ]);
-      
-      if (settingsError) {
-        console.error("Error creating account settings:", settingsError);
-        // Continue anyway, not critical
-      }
-      
-      console.log("User connected to law firm successfully");
+      // Create the law firm and related data
+      await createLawFirm(data.firmName, data.firmName, authData.user.id);
       
       toast({
         title: "Account created!",

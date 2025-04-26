@@ -15,12 +15,13 @@ const Leads = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
   
-  if (!firmId) {
-    return <div>Law firm not found</div>;
-  }
-
   // Function to fetch leads
   const fetchLeads = async () => {
+    if (!firmId) {
+      setIsLoading(false);
+      return;
+    }
+    
     try {
       setIsLoading(true);
       const data = await getLeads(firmId);
@@ -47,9 +48,7 @@ const Leads = () => {
 
   // Fetch leads on component mount
   useEffect(() => {
-    if (firmId) {
-      fetchLeads();
-    }
+    fetchLeads();
   }, [firmId]);
 
   return (

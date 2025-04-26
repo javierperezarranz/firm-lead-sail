@@ -65,11 +65,48 @@ const AccountSettings = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Handle form submission logic
-    toast({
-      title: "Settings updated",
-      description: "Your account settings have been updated successfully."
-    });
+    if (!firmId) return;
+    
+    try {
+      const firm = await getLawFirmBySlug(firmId);
+      
+      if (!firm) {
+        toast({
+          title: "Error",
+          description: "Law firm not found",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Update the account settings with the new email
+      const { error } = await supabase
+        .from('account_settings')
+        .update({ email })
+        .eq('law_firm_id', firm.id);
+      
+      if (error) {
+        console.error("Error updating account settings:", error);
+        toast({
+          title: "Error",
+          description: "Failed to update email settings",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      toast({
+        title: "Settings updated",
+        description: "Your account settings have been updated successfully."
+      });
+    } catch (error) {
+      console.error("Error updating account settings:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update account settings",
+        variant: "destructive",
+      });
+    }
   };
   
   return (
