@@ -9,6 +9,275 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      account_settings: {
+        Row: {
+          email: string
+          id: number
+          law_firm_id: number
+          password_hash: string
+          profile_image: string | null
+          updated_at: string
+        }
+        Insert: {
+          email: string
+          id?: number
+          law_firm_id: number
+          password_hash: string
+          profile_image?: string | null
+          updated_at?: string
+        }
+        Update: {
+          email?: string
+          id?: number
+          law_firm_id?: number
+          password_hash?: string
+          profile_image?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_settings_law_firm_id_fkey"
+            columns: ["law_firm_id"]
+            isOneToOne: true
+            referencedRelation: "law_firms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      areas_of_law: {
+        Row: {
+          id: number
+          name: string
+        }
+        Insert: {
+          id?: number
+          name: string
+        }
+        Update: {
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
+      counties: {
+        Row: {
+          id: number
+          name: string
+          state_id: number
+        }
+        Insert: {
+          id?: number
+          name: string
+          state_id: number
+        }
+        Update: {
+          id?: number
+          name?: string
+          state_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "counties_state_id_fkey"
+            columns: ["state_id"]
+            isOneToOne: false
+            referencedRelation: "states"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      firm_mail_laws: {
+        Row: {
+          area_of_law_id: number
+          id: number
+          mail_setting_id: number
+        }
+        Insert: {
+          area_of_law_id: number
+          id?: number
+          mail_setting_id: number
+        }
+        Update: {
+          area_of_law_id?: number
+          id?: number
+          mail_setting_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "firm_mail_laws_area_of_law_id_fkey"
+            columns: ["area_of_law_id"]
+            isOneToOne: false
+            referencedRelation: "areas_of_law"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "firm_mail_laws_mail_setting_id_fkey"
+            columns: ["mail_setting_id"]
+            isOneToOne: false
+            referencedRelation: "firm_mail_settings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      firm_mail_settings: {
+        Row: {
+          county_id: number
+          created_at: string
+          firm_id: number
+          id: number
+          state_id: number
+        }
+        Insert: {
+          county_id: number
+          created_at?: string
+          firm_id: number
+          id?: number
+          state_id: number
+        }
+        Update: {
+          county_id?: number
+          created_at?: string
+          firm_id?: number
+          id?: number
+          state_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "firm_mail_settings_county_id_fkey"
+            columns: ["county_id"]
+            isOneToOne: false
+            referencedRelation: "counties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "firm_mail_settings_firm_id_fkey"
+            columns: ["firm_id"]
+            isOneToOne: false
+            referencedRelation: "law_firms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "firm_mail_settings_state_id_fkey"
+            columns: ["state_id"]
+            isOneToOne: false
+            referencedRelation: "states"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      intake_responses: {
+        Row: {
+          answer: string
+          id: number
+          lead_id: number
+          question_key: string
+        }
+        Insert: {
+          answer: string
+          id?: number
+          lead_id: number
+          question_key: string
+        }
+        Update: {
+          answer?: string
+          id?: number
+          lead_id?: number
+          question_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intake_responses_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      law_firm_users: {
+        Row: {
+          created_at: string
+          id: number
+          law_firm_id: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          law_firm_id: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          law_firm_id?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "law_firm_users_law_firm_id_fkey"
+            columns: ["law_firm_id"]
+            isOneToOne: false
+            referencedRelation: "law_firms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      law_firms: {
+        Row: {
+          created_at: string
+          id: number
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      leads: {
+        Row: {
+          email: string
+          id: number
+          law_firm_id: number
+          name: string
+          phone: string | null
+          submitted_at: string
+        }
+        Insert: {
+          email: string
+          id?: number
+          law_firm_id: number
+          name: string
+          phone?: string | null
+          submitted_at?: string
+        }
+        Update: {
+          email?: string
+          id?: number
+          law_firm_id?: number
+          name?: string
+          phone?: string | null
+          submitted_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_law_firm_id_fkey"
+            columns: ["law_firm_id"]
+            isOneToOne: false
+            referencedRelation: "law_firms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -27,12 +296,30 @@ export type Database = {
         }
         Relationships: []
       }
+      states: {
+        Row: {
+          id: number
+          name: string
+        }
+        Insert: {
+          id?: number
+          name: string
+        }
+        Update: {
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      user_belongs_to_law_firm: {
+        Args: { user_id: string; firm_id: number }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

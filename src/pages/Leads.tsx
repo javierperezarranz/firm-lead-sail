@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { getLeads } from '@/utils/api';
+import { getLeads } from '@/utils/api-supabase';
 import { Lead } from '@/types';
 import LeadTable from '@/components/LeadTable';
 import { Button } from '@/components/ui/button';
