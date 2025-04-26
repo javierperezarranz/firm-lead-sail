@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,6 +15,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
+import { loginUser } from '@/utils/api/auth';
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -40,20 +40,13 @@ const Login = () => {
   const onSubmit = async (data: LoginFormValues) => {
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password,
-      });
-      
-      if (error) throw error;
+      const { user, firmSlug } = await loginUser(data.email, data.password);
       
       toast({
         title: "Logged in successfully",
       });
       
-      // Redirect to back office dashboard
-      // We'll use the first law firm the user has access to for now
-      navigate('/lawfirm1/back'); // In a real app, you would get the user's law firm slug
+      navigate(`/${firmSlug}/back`);
     } catch (error: any) {
       console.error("Error logging in:", error);
       
