@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FormData } from '@/types';
-import { submitLead } from '@/utils/api-supabase';
+import { submitLead } from '@/utils/api/leads';
 
 interface IntakeFormProps {
   lawFirmId: string;

@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { Outlet, useNavigate, useParams } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
 import Sidebar from '@/components/Sidebar';
-import { getLawFirmBySlug } from '@/utils/api-supabase';
+import { getLawFirmBySlug } from '@/utils/api/law-firms';
 
 const BackOffice = () => {
   const { firmId } = useParams<{ firmId: string }>();

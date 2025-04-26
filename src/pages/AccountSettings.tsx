@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Input } from "@/components/ui/input";
@@ -7,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/auth';
-import { getLawFirmBySlug } from '@/utils/api-supabase';
+import { getLawFirmBySlug } from '@/utils/api/law-firms';
 
 const AccountSettings = () => {
   const { firmId } = useParams<{ firmId: string }>();
