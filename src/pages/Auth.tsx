@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -46,31 +46,9 @@ const Auth = () => {
     
     try {
       if (isSignUp) {
-        const { error, data } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: window.location.origin, // Use current origin
-          },
-        });
-        
-        if (error) throw error;
-        
-        if (data.user?.identities?.length === 0) {
-          toast({
-            title: "Account already exists",
-            description: "Please log in instead.",
-            variant: "destructive",
-          });
-          setIsSignUp(false);
-        } else {
-          toast({
-            title: "Account created successfully",
-            description: "You can now log in.",
-          });
-          // Auto-switch to login form after successful signup
-          setIsSignUp(false);
-        }
+        // Redirect to the dedicated signup page instead
+        navigate('/signup');
+        return;
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -111,6 +89,10 @@ const Auth = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSignUpClick = () => {
+    navigate('/signup');
   };
 
   return (
@@ -177,12 +159,13 @@ const Auth = () => {
             <div className="mt-6 text-center text-sm">
               <p className="text-muted-foreground">
                 {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-                <button
-                  onClick={() => setIsSignUp(!isSignUp)}
-                  className="text-primary hover:underline"
+                <Button
+                  onClick={handleSignUpClick}
+                  className="text-primary hover:underline p-0 h-auto bg-transparent"
+                  variant="link"
                 >
                   {isSignUp ? "Log in" : "Sign up"}
-                </button>
+                </Button>
               </p>
             </div>
           </div>

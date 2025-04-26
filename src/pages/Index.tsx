@@ -1,10 +1,17 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, CheckCircle2, HelpCircle } from 'lucide-react';
 
 const Index = () => {
+  const navigate = useNavigate();
+  
+  const handleSignUpClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    navigate('/signup');
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <header className="w-full border-b border-border py-4 backdrop-blur-sm bg-background/80 sticky top-0 z-50">
@@ -43,12 +50,10 @@ const Index = () => {
                 Connect with potential clients who need your legal services using our compliant, data-driven direct mail campaigns.
               </p>
               <div className="flex flex-wrap justify-center gap-4 pt-4">
-                <Link to="/signup">
-                  <Button size="lg" className="gap-2 px-8">
-                    Sign up
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
+                <Button size="lg" className="gap-2 px-8" onClick={handleSignUpClick}>
+                  Sign up
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
                 <Link to="/login">
                   <Button size="lg" variant="secondary" className="gap-2 px-8">
                     Log in
@@ -161,12 +166,10 @@ const Index = () => {
                 Sign up today and start receiving qualified leads through our direct mail campaigns.
               </p>
               <div className="flex flex-wrap justify-center gap-4 pt-4">
-                <Link to="/signup">
-                  <Button size="lg" className="gap-2 px-8">
-                    Sign up now
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
+                <Button size="lg" className="gap-2 px-8" onClick={handleSignUpClick}>
+                  Sign up now
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
               </div>
             </div>
           </div>

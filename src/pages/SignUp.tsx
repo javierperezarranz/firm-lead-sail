@@ -16,8 +16,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { connectUserToLawFirm } from '@/utils/api-supabase';
+import { toast as sonnerToast } from 'sonner';
+import { getLawFirmBySlug } from '@/utils/api-supabase';
 
+// Modified schema to add firmer validation
 const signUpSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
@@ -27,7 +29,7 @@ const signUpSchema = z.object({
     .max(30, "Firm name must be at most 30 characters")
     .regex(
       /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
-      "Firm name may only contain alphanumeric characters or single hyphens, and cannot begin or end with a hyphen"
+      "Firm name may only contain lowercase alphanumeric characters or single hyphens, and cannot begin or end with a hyphen"
     ),
 });
 
@@ -49,7 +51,15 @@ const SignUp = () => {
 
   const onSubmit = async (data: SignUpFormValues) => {
     setIsSubmitting(true);
+    
     try {
+      // First check if firm name is already taken
+      const existingFirm = await getLawFirmBySlug(data.firmName);
+      
+      if (existingFirm) {
+        throw new Error("This firm name is already taken. Please choose a different one.");
+      }
+      
       // Register the user with Supabase
       const { data: authData, error } = await supabase.auth.signUp({
         email: data.email,
@@ -61,22 +71,54 @@ const SignUp = () => {
       
       if (error) throw error;
       
-      if (authData.user) {
-        // Connect the user to the law firm
-        const success = await connectUserToLawFirm(authData.user.id, data.firmName);
-        
-        if (!success) {
-          throw new Error("Failed to create law firm. Please try again.");
-        }
-        
-        toast({
-          title: "Account created!",
-          description: "You've successfully signed up. You can now log in.",
-        });
-        
-        // Redirect to login page
-        navigate('/login');
+      if (!authData.user) {
+        throw new Error("Failed to create user account. Please try again.");
       }
+
+      console.log("User created successfully:", authData.user.id);
+      
+      // Create the law firm
+      const { data: firmData, error: firmError } = await supabase
+        .from('law_firms')
+        .insert([
+          { name: data.firmName, slug: data.firmName }
+        ])
+        .select('id')
+        .single();
+      
+      if (firmError) {
+        console.error("Error creating law firm:", firmError);
+        throw new Error("Failed to create law firm. Please try again.");
+      }
+      
+      console.log("Law firm created successfully:", firmData.id);
+      
+      // Connect user to the law firm
+      const { error: connectionError } = await supabase
+        .from('law_firm_users')
+        .insert([
+          { user_id: authData.user.id, law_firm_id: firmData.id }
+        ]);
+      
+      if (connectionError) {
+        console.error("Error connecting user to law firm:", connectionError);
+        throw new Error("Failed to connect user to law firm. Please try again.");
+      }
+      
+      console.log("User connected to law firm successfully");
+      
+      toast({
+        title: "Account created!",
+        description: "You've successfully signed up. You can now log in.",
+      });
+      
+      sonnerToast.success("Account created successfully!");
+      
+      // Redirect to login page after a short delay
+      setTimeout(() => {
+        navigate('/login');
+      }, 500);
+      
     } catch (error: any) {
       console.error("Error signing up:", error);
       
@@ -180,7 +222,7 @@ const SignUp = () => {
                         </FormControl>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Example: lawscheduling.com/law-firm-name. The name may only contain alphanumeric characters or single hyphens, and cannot begin or end with a hyphen.
+                        Example: lawscheduling.com/law-firm-name. The name may only contain lowercase alphanumeric characters or single hyphens, and cannot begin or end with a hyphen.
                       </p>
                       <FormMessage />
                     </FormItem>
