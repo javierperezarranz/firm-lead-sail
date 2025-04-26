@@ -16,50 +16,67 @@ import {
 export const getLawFirmBySlug = async (slug: string): Promise<LawFirm | null> => {
   console.log(`Fetching law firm with slug: ${slug}`);
   
-  const { data, error } = await supabase
-    .from('law_firms')
-    .select('*')
-    .eq('slug', slug)
-    .single();
-  
-  if (error) {
+  try {
+    const { data, error } = await supabase
+      .from('law_firms')
+      .select('*')
+      .eq('slug', slug)
+      .single();
+    
+    if (error) {
+      console.error('Error fetching law firm:', error);
+      return null;
+    }
+    
+    return {
+      id: data.id,
+      name: data.name,
+      slug: data.slug,
+      createdAt: data.created_at
+    };
+  } catch (error) {
     console.error('Error fetching law firm:', error);
     return null;
   }
-  
-  return {
-    id: data.id,
-    name: data.name,
-    slug: data.slug,
-    createdAt: data.created_at
-  };
 };
 
 // Get leads for a specific law firm
 export const getLeads = async (firmSlug: string): Promise<Lead[]> => {
   console.log(`Fetching leads for ${firmSlug}`);
   
-  const firm = await getLawFirmBySlug(firmSlug);
-  if (!firm) return [];
-  
-  const { data, error } = await supabase
-    .from('leads')
-    .select('*')
-    .eq('law_firm_id', firm.id);
-  
-  if (error) {
-    console.error('Error fetching leads:', error);
+  try {
+    const firm = await getLawFirmBySlug(firmSlug);
+    if (!firm) {
+      console.error(`Law firm not found with slug: ${firmSlug}`);
+      return [];
+    }
+    
+    console.log(`Found firm with ID: ${firm.id}, fetching leads`);
+    
+    const { data, error } = await supabase
+      .from('leads')
+      .select('*')
+      .eq('law_firm_id', firm.id);
+    
+    if (error) {
+      console.error('Error fetching leads:', error);
+      return [];
+    }
+    
+    console.log(`Fetched ${data?.length || 0} leads`);
+    
+    return data.map(lead => ({
+      id: lead.id,
+      lawFirmId: lead.law_firm_id,
+      name: lead.name,
+      email: lead.email,
+      phone: lead.phone || '',
+      submittedAt: lead.submitted_at
+    }));
+  } catch (error) {
+    console.error('Error in getLeads:', error);
     return [];
   }
-  
-  return data.map(lead => ({
-    id: lead.id,
-    lawFirmId: lead.law_firm_id,
-    name: lead.name,
-    email: lead.email,
-    phone: lead.phone || '',
-    submittedAt: lead.submitted_at
-  }));
 };
 
 // Get leads with their intake responses

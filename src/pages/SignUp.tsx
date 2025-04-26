@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { toast as sonnerToast } from 'sonner';
-import { getLawFirmBySlug } from '@/utils/api-supabase';
 
 // Modified schema to add firmer validation
 const signUpSchema = z.object({
@@ -49,14 +48,33 @@ const SignUp = () => {
     },
   });
 
+  const checkFirmExists = async (slug: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('law_firms')
+        .select('id')
+        .eq('slug', slug)
+        .single();
+      
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+        throw error;
+      }
+      
+      return !!data; // Return true if firm exists, false otherwise
+    } catch (error) {
+      console.error("Error checking firm existence:", error);
+      return false;
+    }
+  };
+
   const onSubmit = async (data: SignUpFormValues) => {
     setIsSubmitting(true);
     
     try {
       // First check if firm name is already taken
-      const existingFirm = await getLawFirmBySlug(data.firmName);
+      const firmExists = await checkFirmExists(data.firmName);
       
-      if (existingFirm) {
+      if (firmExists) {
         throw new Error("This firm name is already taken. Please choose a different one.");
       }
       
@@ -103,6 +121,22 @@ const SignUp = () => {
       if (connectionError) {
         console.error("Error connecting user to law firm:", connectionError);
         throw new Error("Failed to connect user to law firm. Please try again.");
+      }
+      
+      // Create account settings for the law firm with the user's email
+      const { error: settingsError } = await supabase
+        .from('account_settings')
+        .insert([
+          { 
+            email: data.email, 
+            law_firm_id: firmData.id,
+            password_hash: 'placeholder' // This would typically be handled securely
+          }
+        ]);
+      
+      if (settingsError) {
+        console.error("Error creating account settings:", settingsError);
+        // Continue anyway, not critical
       }
       
       console.log("User connected to law firm successfully");

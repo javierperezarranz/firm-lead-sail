@@ -6,12 +6,14 @@ import { Lead } from '@/types';
 import LeadTable from '@/components/LeadTable';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const Leads = () => {
   const { firmId } = useParams<{ firmId: string }>();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const { toast } = useToast();
   
   if (!firmId) {
     return <div>Law firm not found</div>;
@@ -22,9 +24,15 @@ const Leads = () => {
     try {
       setIsLoading(true);
       const data = await getLeads(firmId);
+      console.log("Fetched leads:", data);
       setLeads(data);
     } catch (error) {
       console.error("Error fetching leads:", error);
+      toast({
+        title: "Error fetching leads",
+        description: "Could not load lead data. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -39,7 +47,9 @@ const Leads = () => {
 
   // Fetch leads on component mount
   useEffect(() => {
-    fetchLeads();
+    if (firmId) {
+      fetchLeads();
+    }
   }, [firmId]);
 
   return (
