@@ -12,77 +12,42 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search } from 'lucide-react';
-
-// Mock law firm data
-const mockFirms = [
-  {
-    id: "lawfirm1",
-    name: "Johnson & Associates",
-    email: "info@johnsonlaw.com",
-    lastLogin: "2023-06-15T10:30:00Z",
-    leadsCount: 12,
-  },
-  {
-    id: "lawfirm2",
-    name: "Smith Legal Group",
-    email: "contact@smithlegal.com",
-    lastLogin: "2023-06-10T14:45:00Z",
-    leadsCount: 8,
-  },
-  {
-    id: "lawfirm3",
-    name: "Martinez Law Office",
-    email: "hello@martinezlaw.com", 
-    lastLogin: "2023-06-17T09:15:00Z",
-    leadsCount: 5,
-  },
-  {
-    id: "lawfirm4",
-    name: "Taylor & Taylor",
-    email: "info@taylorlaw.com",
-    lastLogin: "2023-06-12T11:20:00Z",
-    leadsCount: 15,
-  },
-  {
-    id: "lawfirm5",
-    name: "Wilson Legal Services",
-    email: "admin@wilsonlegal.com",
-    lastLogin: "2023-06-05T13:10:00Z",
-    leadsCount: 3,
-  },
-];
-
-interface LawFirm {
-  id: string;
-  name: string;
-  email: string;
-  lastLogin: string;
-  leadsCount: number;
-}
+import { getLawFirmsWithDetails } from '@/utils/api';
+import { MockLawFirmWithDetails } from '@/types';
 
 const ManageFirms = () => {
-  const [firms, setFirms] = useState<LawFirm[]>([]);
+  const [firms, setFirms] = useState<MockLawFirmWithDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Load mock data
+  // Load firms data
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setFirms(mockFirms);
-      setIsLoading(false);
-    }, 1000);
+    const loadFirms = async () => {
+      try {
+        setIsLoading(true);
+        const data = await getLawFirmsWithDetails();
+        setFirms(data);
+      } catch (error) {
+        console.error('Error loading firms:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadFirms();
   }, []);
 
   // Filter firms based on search query
   const filteredFirms = firms.filter(firm => 
     firm.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    firm.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    firm.id.toLowerCase().includes(searchQuery.toLowerCase())
+    firm.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    firm.slug.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Format date for display
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return 'Never';
+    
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('en-US', {
       dateStyle: 'medium',
@@ -165,13 +130,13 @@ const ManageFirms = () => {
                   filteredFirms.map((firm) => (
                     <TableRow key={firm.id}>
                       <TableCell className="font-medium">{firm.name}</TableCell>
-                      <TableCell>{firm.id}</TableCell>
+                      <TableCell>{firm.slug}</TableCell>
                       <TableCell>{firm.email}</TableCell>
                       <TableCell>{formatDate(firm.lastLogin)}</TableCell>
                       <TableCell>{firm.leadsCount}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Link to={`/${firm.id}/back`}>
+                          <Link to={`/${firm.slug}/back`}>
                             <Button size="sm">Access Dashboard</Button>
                           </Link>
                         </div>

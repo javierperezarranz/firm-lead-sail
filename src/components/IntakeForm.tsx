@@ -39,7 +39,11 @@ const IntakeForm: React.FC<IntakeFormProps> = ({ lawFirmId }) => {
     
     try {
       setIsSubmitting(true);
-      await submitLead(formData, lawFirmId);
+      const result = await submitLead(formData, lawFirmId);
+      
+      if (!result) {
+        throw new Error("Failed to submit lead");
+      }
       
       // Show success message
       toast({

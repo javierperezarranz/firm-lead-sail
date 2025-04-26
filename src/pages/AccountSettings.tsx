@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,45 +25,15 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Plus, X } from "lucide-react";
-
-// Mock data for US states and counties
-const usStates = [
-  { value: "ca", label: "California" },
-  { value: "ny", label: "New York" },
-  { value: "tx", label: "Texas" },
-  { value: "fl", label: "Florida" },
-  { value: "il", label: "Illinois" },
-];
-
-// Mock county data (would be fetched based on selected state in a real app)
-const countyData = {
-  ca: [
-    { value: "la", label: "Los Angeles" },
-    { value: "sf", label: "San Francisco" },
-    { value: "sd", label: "San Diego" },
-  ],
-  ny: [
-    { value: "ny", label: "New York" },
-    { value: "kings", label: "Kings" },
-    { value: "queens", label: "Queens" },
-  ],
-  tx: [
-    { value: "harris", label: "Harris" },
-    { value: "dallas", label: "Dallas" },
-    { value: "bexar", label: "Bexar" },
-  ],
-  fl: [
-    { value: "miami-dade", label: "Miami-Dade" },
-    { value: "broward", label: "Broward" },
-    { value: "palm-beach", label: "Palm Beach" },
-  ],
-  il: [
-    { value: "cook", label: "Cook" },
-    { value: "dupage", label: "DuPage" },
-    { value: "lake", label: "Lake" },
-  ],
-};
+import { Plus, X } from 'lucide-react';
+import { 
+  getStates, 
+  getCountiesForState, 
+  getAreasOfLaw, 
+  getFirmMailAreasOfLaw,
+  addFirmMailSetting
+} from '@/utils/api';
+import { State, County, AreaOfLaw } from '@/types';
 
 const profileSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -75,28 +45,26 @@ const profileSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
-const areasOfLaw = [
-  { id: "marriage-app", label: "Applied for marriage" },
-  { id: "married", label: "Got married" },
-  { id: "criminal", label: "Criminal" },
-  { id: "real-estate", label: "Real estate purchase" },
-];
-
-interface AreaSelection {
-  state: string;
+interface AreaSelectionUI {
+  stateId: number;
   stateName: string;
-  county: string;
+  countyId: number;
   countyName: string;
-  areas: string[];
+  areas: number[]; // Area of law IDs
+  areaNames: string[]; // Area of law names (for display)
 }
 
 const AccountSettings = () => {
   const { firmId } = useParams<{ firmId: string }>();
-  const [selectedState, setSelectedState] = useState<string | undefined>();
-  const [selectedCounty, setSelectedCounty] = useState<string | undefined>();
-  const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
-  const [areaSelections, setAreaSelections] = useState<AreaSelection[]>([]);
+  const [states, setStates] = useState<State[]>([]);
+  const [counties, setCounties] = useState<County[]>([]);
+  const [areasOfLaw, setAreasOfLaw] = useState<AreaOfLaw[]>([]);
+  const [selectedStateId, setSelectedStateId] = useState<string>('');
+  const [selectedCountyId, setSelectedCountyId] = useState<string>('');
+  const [selectedAreaIds, setSelectedAreaIds] = useState<string[]>([]);
+  const [areaSelections, setAreaSelections] = useState<AreaSelectionUI[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [avatarUrl, setAvatarUrl] = useState("");
 
   const form = useForm<ProfileFormValues>({
@@ -110,10 +78,70 @@ const AccountSettings = () => {
     },
   });
 
-  const counties = selectedState ? countyData[selectedState as keyof typeof countyData] : [];
+  // Load states, counties, and areas of law
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        // Load states, areas of law, and existing mail settings
+        const [statesData, areasData, mailAreaSettings] = await Promise.all([
+          getStates(),
+          getAreasOfLaw(),
+          getFirmMailAreasOfLaw(firmId || '')
+        ]);
+        
+        setStates(statesData);
+        setAreasOfLaw(areasData);
+        
+        // Convert the mail area settings to the UI format
+        const selections: AreaSelectionUI[] = mailAreaSettings.map(({ setting, areas }) => ({
+          stateId: setting.stateId,
+          stateName: setting.stateName || '',
+          countyId: setting.countyId,
+          countyName: setting.countyName || '',
+          areas: areas.map(area => area.id),
+          areaNames: areas.map(area => area.name)
+        }));
+        
+        setAreaSelections(selections);
+      } catch (error) {
+        console.error("Error loading data:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load settings data. Please try again.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    if (firmId) {
+      loadData();
+    }
+  }, [firmId]);
 
-  const addAreaSelection = () => {
-    if (!selectedState || !selectedCounty || selectedAreas.length === 0) {
+  // Load counties when state changes
+  useEffect(() => {
+    const loadCounties = async () => {
+      if (selectedStateId) {
+        try {
+          const countiesData = await getCountiesForState(parseInt(selectedStateId));
+          setCounties(countiesData);
+          setSelectedCountyId(''); // Reset county selection
+        } catch (error) {
+          console.error("Error loading counties:", error);
+        }
+      } else {
+        setCounties([]);
+      }
+    };
+    
+    loadCounties();
+  }, [selectedStateId]);
+
+  const addAreaSelection = async () => {
+    if (!selectedStateId || !selectedCountyId || selectedAreaIds.length === 0 || !firmId) {
       toast({
         title: "Incomplete selection",
         description: "Please select a state, county, and at least one area of law",
@@ -122,46 +150,82 @@ const AccountSettings = () => {
       return;
     }
 
-    const stateName = usStates.find(s => s.value === selectedState)?.label || "";
-    const countyName = counties.find(c => c.value === selectedCounty)?.label || "";
+    const stateId = parseInt(selectedStateId);
+    const countyId = parseInt(selectedCountyId);
+    const areaIds = selectedAreaIds.map(id => parseInt(id));
     
     // Check if this state/county combination already exists
     const existingIndex = areaSelections.findIndex(
-      item => item.state === selectedState && item.county === selectedCounty
+      item => item.stateId === stateId && item.countyId === countyId
     );
     
     if (existingIndex >= 0) {
       toast({
         title: "Area already added",
-        description: `${stateName}, ${countyName} is already in your selections`,
+        description: `${states.find(s => s.id === stateId)?.name}, ${counties.find(c => c.id === countyId)?.name} is already in your selections`,
         variant: "destructive",
       });
       return;
     }
 
-    setAreaSelections([
-      ...areaSelections,
-      {
-        state: selectedState,
-        stateName,
-        county: selectedCounty,
-        countyName,
-        areas: [...selectedAreas],
-      },
-    ]);
+    try {
+      setIsSubmitting(true);
+      
+      // Call API to add new mail setting
+      await addFirmMailSetting(
+        firmId,
+        stateId,
+        countyId,
+        areaIds
+      );
+      
+      // Add to UI
+      const stateName = states.find(s => s.id === stateId)?.name || '';
+      const countyName = counties.find(c => c.id === countyId)?.name || '';
+      const areaNames = areasOfLaw
+        .filter(area => areaIds.includes(area.id))
+        .map(area => area.name);
+      
+      setAreaSelections([
+        ...areaSelections,
+        {
+          stateId,
+          stateName,
+          countyId,
+          countyName,
+          areas: areaIds,
+          areaNames
+        }
+      ]);
 
-    // Reset selections
-    setSelectedCounty(undefined);
-    setSelectedAreas([]);
-    
-    toast({
-      title: "Area added",
-      description: `Added ${stateName}, ${countyName} to your target areas`,
-    });
+      // Reset selections
+      setSelectedCountyId('');
+      setSelectedAreaIds([]);
+      
+      toast({
+        title: "Area added",
+        description: `Added ${stateName}, ${countyName} to your target areas`,
+      });
+    } catch (error) {
+      console.error("Error adding area selection:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add area selection. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const removeAreaSelection = (index: number) => {
+    // In a real app, this would call an API to remove the area
     setAreaSelections(areaSelections.filter((_, i) => i !== index));
+    
+    toast({
+      title: "Area removed",
+      description: "The selected area has been removed from your target areas",
+    });
   };
 
   const onSubmit = async (data: ProfileFormValues) => {
@@ -379,93 +443,103 @@ const AccountSettings = () => {
           <h2 className="text-xl font-semibold mb-6">Direct Mail Settings</h2>
           
           <div className="space-y-6">
-            <div className="space-y-4">
-              <h3 className="text-base font-medium">Add Areas for Direct Mail</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">State</label>
-                  <Select
-                    value={selectedState}
-                    onValueChange={setSelectedState}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a state" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {usStates.map((state) => (
-                        <SelectItem
-                          key={state.value}
-                          value={state.value}
-                          disabled={areaSelections.some(s => s.state === state.value)}
-                        >
-                          {state.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+            {isLoading ? (
+              <div className="space-y-4">
+                <div className="h-10 bg-muted animate-pulse rounded-md"></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="h-12 bg-muted animate-pulse rounded-md"></div>
+                  <div className="h-12 bg-muted animate-pulse rounded-md"></div>
                 </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">County</label>
-                  <Select
-                    value={selectedCounty}
-                    onValueChange={setSelectedCounty}
-                    disabled={!selectedState}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a county" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {counties.map((county) => (
-                        <SelectItem key={county.value} value={county.value}>
-                          {county.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <div className="h-24 bg-muted animate-pulse rounded-md"></div>
               </div>
+            ) : (
+              <div className="space-y-4">
+                <h3 className="text-base font-medium">Add Areas for Direct Mail</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">State</label>
+                    <Select
+                      value={selectedStateId}
+                      onValueChange={setSelectedStateId}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a state" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {states.map((state) => (
+                          <SelectItem
+                            key={state.id}
+                            value={state.id.toString()}
+                          >
+                            {state.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Areas of Law</label>
-                <div className="border border-border rounded-md p-3">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {areasOfLaw.map((area) => (
-                      <div key={area.id} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={area.id}
-                          checked={selectedAreas.includes(area.id)}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setSelectedAreas([...selectedAreas, area.id]);
-                            } else {
-                              setSelectedAreas(selectedAreas.filter((id) => id !== area.id));
-                            }
-                          }}
-                        />
-                        <label
-                          htmlFor={area.id}
-                          className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          {area.label}
-                        </label>
-                      </div>
-                    ))}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">County</label>
+                    <Select
+                      value={selectedCountyId}
+                      onValueChange={setSelectedCountyId}
+                      disabled={!selectedStateId}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a county" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {counties.map((county) => (
+                          <SelectItem key={county.id} value={county.id.toString()}>
+                            {county.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-              </div>
 
-              <Button 
-                type="button" 
-                onClick={addAreaSelection}
-                disabled={!selectedState || !selectedCounty || selectedAreas.length === 0}
-                className="flex items-center gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                Add Area
-              </Button>
-            </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Areas of Law</label>
+                  <div className="border border-border rounded-md p-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {areasOfLaw.map((area) => (
+                        <div key={area.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`area-${area.id}`}
+                            checked={selectedAreaIds.includes(area.id.toString())}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedAreaIds([...selectedAreaIds, area.id.toString()]);
+                              } else {
+                                setSelectedAreaIds(selectedAreaIds.filter((id) => id !== area.id.toString()));
+                              }
+                            }}
+                          />
+                          <label
+                            htmlFor={`area-${area.id}`}
+                            className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                          >
+                            {area.name}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <Button 
+                  type="button" 
+                  onClick={addAreaSelection}
+                  disabled={!selectedStateId || !selectedCountyId || selectedAreaIds.length === 0 || isSubmitting}
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Area
+                </Button>
+              </div>
+            )}
 
             {areaSelections.length > 0 && (
               <div className="space-y-4">
@@ -490,12 +564,12 @@ const AccountSettings = () => {
                         </Button>
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        {selection.areas.map((areaId) => (
+                        {selection.areaNames.map((areaName, i) => (
                           <div 
-                            key={areaId} 
+                            key={i} 
                             className="bg-accent text-accent-foreground text-xs px-2 py-1 rounded"
                           >
-                            {areasOfLaw.find(a => a.id === areaId)?.label || areaId}
+                            {areaName}
                           </div>
                         ))}
                       </div>

@@ -3,19 +3,50 @@ import React from 'react';
 import { Outlet, useNavigate, useParams } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
 import Sidebar from '@/components/Sidebar';
+import { getLawFirmBySlug } from '@/utils/api';
 
 const BackOffice = () => {
   const { firmId } = useParams<{ firmId: string }>();
   const { toast } = useToast();
   const navigate = useNavigate();
   
+  // In a real app, we would check if the firm exists here
+  React.useEffect(() => {
+    const checkFirmExists = async () => {
+      if (!firmId) {
+        toast({
+          title: "Error",
+          description: "Law firm not found",
+          variant: "destructive",
+        });
+        navigate('/');
+        return;
+      }
+
+      try {
+        const firm = await getLawFirmBySlug(firmId);
+        if (!firm) {
+          toast({
+            title: "Error",
+            description: `Law firm '${firmId}' not found`,
+            variant: "destructive",
+          });
+          navigate('/');
+        }
+      } catch (error) {
+        console.error("Error checking firm:", error);
+        toast({
+          title: "Error",
+          description: "Could not verify law firm",
+          variant: "destructive",
+        });
+      }
+    };
+
+    checkFirmExists();
+  }, [firmId, toast, navigate]);
+
   if (!firmId) {
-    toast({
-      title: "Error",
-      description: "Law firm not found",
-      variant: "destructive",
-    });
-    navigate('/');
     return null;
   }
 

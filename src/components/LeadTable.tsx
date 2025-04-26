@@ -84,7 +84,7 @@ const LeadTable: React.FC<LeadTableProps> = ({ leads, isLoading }) => {
                 </a>
               </TableCell>
               <TableCell className="text-right text-muted-foreground">
-                {formatDate(lead.createdAt)}
+                {formatDate(lead.submittedAt)}
               </TableCell>
             </TableRow>
           ))}
