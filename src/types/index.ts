@@ -1,15 +1,14 @@
-
 // Core Types
 export interface LawFirm {
-  id: number;
+  id: string; // UUID instead of number
   name: string;
   slug: string;
   createdAt: string;
 }
 
 export interface Lead {
-  id: number;
-  lawFirmId: number;
+  id: string; // UUID instead of number
+  lawFirmId: string; // UUID instead of number
   name: string;
   email: string;
   phone: string;
