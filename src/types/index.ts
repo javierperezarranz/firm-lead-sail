@@ -1,14 +1,15 @@
+
 // Core Types
 export interface LawFirm {
-  id: string; // UUID instead of number
+  id: string;
   name: string;
   slug: string;
   createdAt: string;
 }
 
 export interface Lead {
-  id: string; // UUID instead of number
-  lawFirmId: string; // UUID instead of number
+  id: string;
+  lawFirmId: string;
   name: string;
   email: string;
   phone: string;
@@ -16,15 +17,15 @@ export interface Lead {
 }
 
 export interface IntakeResponse {
-  id: number;
-  leadId: number;
+  id: string;
+  leadId: string;
   questionKey: string;
   answer: string;
 }
 
 export interface AccountSettings {
-  id: number;
-  lawFirmId: number;
+  id: string;
+  lawFirmId: string;
   email: string;
   passwordHash: string;
   profileImage: string | null;
@@ -33,36 +34,35 @@ export interface AccountSettings {
 
 // Direct Mail Related Types
 export interface State {
-  id: number;
+  id: string;
   name: string;
 }
 
 export interface County {
-  id: number;
-  stateId: number;
+  id: string;
+  stateId: string;
   name: string;
 }
 
 export interface AreaOfLaw {
-  id: number;
+  id: string;
   name: string;
 }
 
 export interface FirmMailSetting {
-  id: number;
-  firmId: number;
-  stateId: number;
-  countyId: number;
+  id: string;
+  firmId: string;
+  stateId: string;
+  countyId: string;
   createdAt: string;
-  // For UI display convenience
   stateName?: string;
   countyName?: string;
 }
 
 export interface FirmMailLaw {
-  id: number;
-  mailSettingId: number;
-  areaOfLawId: number;
+  id: string;
+  mailSettingId: string;
+  areaOfLawId: string;
 }
 
 // Form Data Types
