@@ -43,13 +43,13 @@ const saveData = <T>(key: string, data: T): void => {
 // Law Firms table
 const lawFirms: LawFirm[] = initializeData('lawFirms', [
   {
-    id: 1,
+    id: '1',
     name: "Law Firm 1",
     slug: "lawfirm1",
     createdAt: "2023-06-10T14:00:00Z"
   },
   {
-    id: 2,
+    id: '2',
     name: "Law Firm 2",
     slug: "lawfirm2",
     createdAt: "2023-06-12T10:00:00Z"
@@ -59,24 +59,24 @@ const lawFirms: LawFirm[] = initializeData('lawFirms', [
 // Leads table
 const leads: Lead[] = initializeData('leads', [
   {
-    id: 1,
-    lawFirmId: 1,
+    id: '1',
+    lawFirmId: '1',
     name: "LawFirm1 Client1",
     email: "client1@lf1.com",
     phone: "555-1001",
     submittedAt: "2023-06-15T10:30:00Z"
   },
   {
-    id: 2,
-    lawFirmId: 1,
+    id: '2',
+    lawFirmId: '1',
     name: "LawFirm1 Client2",
     email: "client2@lf1.com",
     phone: "555-1002",
     submittedAt: "2023-06-16T14:45:00Z"
   },
   {
-    id: 3,
-    lawFirmId: 2,
+    id: '3',
+    lawFirmId: '2',
     name: "LawFirm2 Client1",
     email: "client1@lf2.com",
     phone: "555-2001",
@@ -87,26 +87,26 @@ const leads: Lead[] = initializeData('leads', [
 // Intake Responses table
 const intakeResponses: IntakeResponse[] = initializeData('intakeResponses', [
   {
-    id: 1,
-    leadId: 1,
+    id: '1',
+    leadId: '1',
     questionKey: "case_type",
     answer: "Family Law"
   },
   {
-    id: 2,
-    leadId: 1,
+    id: '2',
+    leadId: '1',
     questionKey: "budget",
     answer: "$5,000"
   },
   {
-    id: 3,
-    leadId: 2,
+    id: '3',
+    leadId: '2',
     questionKey: "case_type",
     answer: "Criminal Defense"
   },
   {
-    id: 4,
-    leadId: 3,
+    id: '4',
+    leadId: '3',
     questionKey: "case_type",
     answer: "Real Estate Purchase"
   }
@@ -115,16 +115,16 @@ const intakeResponses: IntakeResponse[] = initializeData('intakeResponses', [
 // Account Settings table
 const accountSettings: AccountSettings[] = initializeData('accountSettings', [
   {
-    id: 1,
-    lawFirmId: 1,
+    id: '1',
+    lawFirmId: '1',
     email: "admin@lf1.com",
     passwordHash: "HASHED_PASSWORD_1",
     profileImage: null,
     updatedAt: "2023-06-10T14:00:00Z"
   },
   {
-    id: 2,
-    lawFirmId: 2,
+    id: '2',
+    lawFirmId: '2',
     email: "admin@lf2.com",
     passwordHash: "HASHED_PASSWORD_2",
     profileImage: null,
@@ -134,55 +134,55 @@ const accountSettings: AccountSettings[] = initializeData('accountSettings', [
 
 // States table
 const states: State[] = initializeData('states', [
-  { id: 1, name: "Florida" },
-  { id: 2, name: "California" },
-  { id: 3, name: "New York" },
-  { id: 4, name: "Texas" },
-  { id: 5, name: "Illinois" },
+  { id: '1', name: "Florida" },
+  { id: '2', name: "California" },
+  { id: '3', name: "New York" },
+  { id: '4', name: "Texas" },
+  { id: '5', name: "Illinois" },
 ]);
 
 // Counties table
 const counties: County[] = initializeData('counties', [
-  { id: 1, stateId: 1, name: "Miami-Dade" },
-  { id: 2, stateId: 1, name: "Broward" },
-  { id: 3, stateId: 1, name: "Palm Beach" },
-  { id: 4, stateId: 2, name: "Los Angeles" },
-  { id: 5, stateId: 2, name: "San Francisco" },
-  { id: 6, stateId: 2, name: "San Diego" },
-  { id: 7, stateId: 3, name: "New York" },
-  { id: 8, stateId: 3, name: "Kings" },
-  { id: 9, stateId: 3, name: "Queens" },
-  { id: 10, stateId: 4, name: "Harris" },
-  { id: 11, stateId: 4, name: "Dallas" },
-  { id: 12, stateId: 4, name: "Bexar" },
-  { id: 13, stateId: 5, name: "Cook" },
-  { id: 14, stateId: 5, name: "DuPage" },
-  { id: 15, stateId: 5, name: "Lake" }
+  { id: '1', stateId: '1', name: "Miami-Dade" },
+  { id: '2', stateId: '1', name: "Broward" },
+  { id: '3', stateId: '1', name: "Palm Beach" },
+  { id: '4', stateId: '2', name: "Los Angeles" },
+  { id: '5', stateId: '2', name: "San Francisco" },
+  { id: '6', stateId: '2', name: "San Diego" },
+  { id: '7', stateId: '3', name: "New York" },
+  { id: '8', stateId: '3', name: "Kings" },
+  { id: '9', stateId: '3', name: "Queens" },
+  { id: '10', stateId: '4', name: "Harris" },
+  { id: '11', stateId: '4', name: "Dallas" },
+  { id: '12', stateId: '4', name: "Bexar" },
+  { id: '13', stateId: '5', name: "Cook" },
+  { id: '14', stateId: '5', name: "DuPage" },
+  { id: '15', stateId: '5', name: "Lake" }
 ]);
 
 // Areas of Law table
 const areasOfLaw: AreaOfLaw[] = initializeData('areasOfLaw', [
-  { id: 1, name: "Family" },
-  { id: 2, name: "Criminal" },
-  { id: 3, name: "Real Estate" },
-  { id: 4, name: "Marriage" }
+  { id: '1', name: "Family" },
+  { id: '2', name: "Criminal" },
+  { id: '3', name: "Real Estate" },
+  { id: '4', name: "Marriage" }
 ]);
 
 // Firm Mail Settings table
 const firmMailSettings: FirmMailSetting[] = initializeData('firmMailSettings', [
   {
-    id: 1,
-    firmId: 1,
-    stateId: 1,
-    countyId: 1,
+    id: '1',
+    firmId: '1',
+    stateId: '1',
+    countyId: '1',
     createdAt: "2023-06-15T10:30:00Z"
   }
 ]);
 
 // Firm Mail Laws table
 const firmMailLaws: FirmMailLaw[] = initializeData('firmMailLaws', [
-  { id: 1, mailSettingId: 1, areaOfLawId: 1 }, // Family law for Firm 1, Miami-Dade
-  { id: 2, mailSettingId: 1, areaOfLawId: 2 }  // Criminal law for Firm 1, Miami-Dade
+  { id: '1', mailSettingId: '1', areaOfLawId: '1' },
+  { id: '2', mailSettingId: '1', areaOfLawId: '2' }
 ]);
 
 // Helper function to find a law firm by slug

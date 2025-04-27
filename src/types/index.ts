@@ -1,4 +1,3 @@
-
 // Core Types
 export interface LawFirm {
   id: string;
