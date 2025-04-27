@@ -28,10 +28,10 @@ const IntakeForm: React.FC<IntakeFormProps> = ({ lawFirmId }) => {
     e.preventDefault();
     
     // Basic validation
-    if (!formData.name || !formData.email || !formData.phone) {
+    if (!formData.name || !formData.email) {
       toast({
         title: "Error",
-        description: "Please fill out all fields",
+        description: "Please fill out name and email fields",
         variant: "destructive"
       });
       return;
@@ -113,7 +113,6 @@ const IntakeForm: React.FC<IntakeFormProps> = ({ lawFirmId }) => {
             onChange={handleChange}
             placeholder="(555) 123-4567"
             className="w-full transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-            required
           />
         </div>
         

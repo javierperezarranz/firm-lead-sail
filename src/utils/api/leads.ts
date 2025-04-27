@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { FormData, Lead, LeadWithResponses } from "@/types";
 import { getLawFirmBySlug } from "./law-firms";
@@ -77,7 +78,9 @@ export const submitLead = async (data: FormData, firmSlug: string): Promise<Lead
       return null;
     }
     
-    // Create the lead with public insert policy
+    console.log("Inserting lead for firm ID:", firm.id);
+    
+    // Create the lead with no RLS restrictions
     const { data: newLead, error: leadError } = await supabase
       .from('leads')
       .insert({
@@ -87,19 +90,23 @@ export const submitLead = async (data: FormData, firmSlug: string): Promise<Lead
         phone: data.phone || null,
         submitted_at: new Date().toISOString()
       })
-      .select()
+      .select('*')
       .single();
     
     if (leadError) {
       console.error('Error creating lead:', leadError);
-      return null;
+      throw new Error(`Failed to create lead: ${leadError.message}`);
     }
+    
+    console.log("Lead created successfully:", newLead);
     
     // Extract any additional fields for intake responses
     const { name, email, phone, ...additionalFields } = data;
     
     // If there are additional fields, add them as intake responses
     if (Object.keys(additionalFields).length > 0) {
+      console.log("Adding intake responses:", additionalFields);
+      
       const intakeResponses = Object.entries(additionalFields).map(([key, value]) => ({
         lead_id: newLead.id,
         question_key: key,
@@ -112,6 +119,7 @@ export const submitLead = async (data: FormData, firmSlug: string): Promise<Lead
       
       if (responseError) {
         console.error('Error creating intake responses:', responseError);
+        // Continue with the lead creation even if intake responses fail
       }
     }
     
