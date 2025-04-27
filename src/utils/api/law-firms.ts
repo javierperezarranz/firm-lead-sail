@@ -7,7 +7,7 @@ export const getLawFirmBySlug = async (slug: string): Promise<LawFirm | null> =>
   
   try {
     const { data, error } = await supabase
-      .from('law_firms')
+      .from('firms')
       .select('*')
       .eq('slug', slug)
       .single();
@@ -18,7 +18,7 @@ export const getLawFirmBySlug = async (slug: string): Promise<LawFirm | null> =>
     }
     
     return {
-      id: data.id,
+      id: data.firm_id,
       name: data.name,
       slug: data.slug,
       createdAt: data.created_at
@@ -34,10 +34,10 @@ export const connectUserToLawFirm = async (userId: string, lawFirmSlug: string):
   if (!firm) return false;
   
   const { error } = await supabase
-    .from('law_firm_users')
+    .from('lawyers')
     .insert({
-      user_id: userId,
-      law_firm_id: firm.id
+      lawyer_id: userId,
+      firm_id: firm.id
     });
   
   if (error) {

@@ -18,7 +18,7 @@ export const getLeads = async (firmSlug: string): Promise<Lead[]> => {
     const { data, error } = await supabase
       .from('leads')
       .select('*')
-      .eq('law_firm_id', firm.id);
+      .eq('firm_id', firm.id);
     
     if (error) {
       console.error('Error fetching leads:', error);
@@ -28,12 +28,12 @@ export const getLeads = async (firmSlug: string): Promise<Lead[]> => {
     console.log(`Fetched ${data?.length || 0} leads`);
     
     return data.map(lead => ({
-      id: lead.id,
-      lawFirmId: lead.law_firm_id,
-      name: lead.name,
+      id: lead.lead_id,
+      lawFirmId: lead.firm_id,
+      name: lead.full_name,
       email: lead.email,
       phone: lead.phone || '',
-      submittedAt: lead.submitted_at
+      submittedAt: lead.created_at
     }));
   } catch (error) {
     console.error('Error in getLeads:', error);
@@ -56,7 +56,7 @@ export const getLeadsWithResponses = async (firmSlug: string): Promise<LeadWithR
     }
     
     const responses = data.map(response => ({
-      id: response.id,
+      id: response.response_id,
       leadId: response.lead_id,
       questionKey: response.question_key,
       answer: response.answer
@@ -80,15 +80,14 @@ export const submitLead = async (data: FormData, firmSlug: string): Promise<Lead
     
     console.log("Inserting lead for firm ID:", firm.id);
     
-    // Create the lead with no RLS restrictions
+    // Create the lead with the new schema
     const { data: newLead, error: leadError } = await supabase
       .from('leads')
       .insert({
-        law_firm_id: firm.id,
-        name: data.name,
+        firm_id: firm.id,
+        full_name: data.name,
         email: data.email,
-        phone: data.phone || null,
-        submitted_at: new Date().toISOString()
+        phone: data.phone || null
       })
       .select('*')
       .single();
@@ -108,7 +107,7 @@ export const submitLead = async (data: FormData, firmSlug: string): Promise<Lead
       console.log("Adding intake responses:", additionalFields);
       
       const intakeResponses = Object.entries(additionalFields).map(([key, value]) => ({
-        lead_id: newLead.id,
+        lead_id: newLead.lead_id,
         question_key: key,
         answer: String(value)
       }));
@@ -124,12 +123,12 @@ export const submitLead = async (data: FormData, firmSlug: string): Promise<Lead
     }
     
     return {
-      id: newLead.id,
-      lawFirmId: newLead.law_firm_id,
-      name: newLead.name,
+      id: newLead.lead_id,
+      lawFirmId: newLead.firm_id,
+      name: newLead.full_name,
       email: newLead.email,
       phone: newLead.phone || '',
-      submittedAt: newLead.submitted_at
+      submittedAt: newLead.created_at
     };
   } catch (error) {
     console.error('Error in submitLead:', error);
