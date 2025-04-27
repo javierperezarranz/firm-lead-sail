@@ -6,10 +6,24 @@ export const getLawFirmBySlug = async (slug: string): Promise<LawFirm | null> =>
   console.log(`Fetching law firm with slug: ${slug}`);
   
   try {
+    const { data: firmId, error: rpcError } = await supabase.rpc('get_firm_id_from_slug', {
+      slug_param: slug
+    });
+    
+    if (rpcError) {
+      console.error('Error fetching law firm ID:', rpcError);
+      return null;
+    }
+    
+    if (!firmId) {
+      console.error('No firm found with slug:', slug);
+      return null;
+    }
+    
     const { data, error } = await supabase
       .from('firms')
       .select('*')
-      .eq('slug', slug)
+      .eq('firm_id', firmId)
       .single();
     
     if (error) {

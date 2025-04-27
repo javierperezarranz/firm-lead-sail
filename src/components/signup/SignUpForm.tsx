@@ -37,7 +37,15 @@ export const SignUpForm = () => {
     setIsSubmitting(true);
     
     try {
-      await signupUserWithLawFirm(data.email, data.password, data.firmName);
+      // Create a slug from the firm name (lowercase, hyphens for spaces)
+      const firmSlug = data.firmName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      
+      await signupUserWithLawFirm(
+        data.email,
+        data.password,
+        data.firmName,
+        firmSlug
+      );
       
       toast({
         title: "Account created!",

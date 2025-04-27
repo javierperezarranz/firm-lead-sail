@@ -10,22 +10,16 @@ export async function loginUser(email: string, password: string) {
 
     if (signInError) throw signInError;
     
-    // Try to get lawyer record first
-    const { data: lawyerData, error: lawyerError } = await supabase
-      .from('lawyers')
-      .select('firm_id')
-      .eq('lawyer_id', signInData.user?.id)
-      .single();
+    // Try to get lawyer record first using RPC function
+    const { data: isLawyer, error: lawyerError } = await supabase.rpc('is_lawyer_for_firm', {
+      firm_uuid: null // Just checking if user is a lawyer for any firm
+    });
       
     // If user is not a lawyer, check if they're an admin
-    if (lawyerError) {
-      const { data: adminData, error: adminError } = await supabase
-        .from('admins')
-        .select('admin_id')
-        .eq('admin_id', signInData.user?.id)
-        .single();
+    if (lawyerError || !isLawyer) {
+      const { data: isAdmin, error: adminError } = await supabase.rpc('is_admin');
       
-      if (!adminError && adminData) {
+      if (!adminError && isAdmin) {
         // User is an admin, redirect to admin page
         return { 
           user: signInData.user,
@@ -33,18 +27,23 @@ export async function loginUser(email: string, password: string) {
         };
       }
       
-      // Not a lawyer or admin
-      throw new Error('User not associated with any law firm or admin role');
+      if (!isLawyer) {
+        // Not a lawyer or admin
+        throw new Error('User not associated with any law firm or admin role');
+      }
     }
     
     // Get the law firm slug for redirection
     const { data: firmData, error: firmError } = await supabase
       .from('firms')
       .select('slug')
-      .eq('firm_id', lawyerData.firm_id)
+      .eq('firm_id', signInData.user.id)
       .single();
       
-    if (firmError) throw firmError;
+    if (firmError) {
+      console.error("Error fetching firm:", firmError);
+      throw new Error('Could not find associated law firm');
+    }
     
     return { 
       user: signInData.user, 
@@ -59,35 +58,26 @@ export async function loginUser(email: string, password: string) {
 
 export async function checkUserHasAccess(userId: string, firmSlug: string): Promise<boolean> {
   try {
-    // Get the firm ID from the slug
-    const { data: firm, error: firmError } = await supabase
-      .from('firms')
-      .select('firm_id')
-      .eq('slug', firmSlug)
-      .single();
+    // Get the firm ID from the slug using RPC function
+    const { data: firmId, error: firmError } = await supabase.rpc('get_firm_id_from_slug', {
+      slug_param: firmSlug
+    });
       
-    if (firmError || !firm) return false;
+    if (firmError || !firmId) return false;
     
-    // Check if user is an admin
-    const { data: admin, error: adminError } = await supabase
-      .from('admins')
-      .select('admin_id')
-      .eq('admin_id', userId)
-      .single();
+    // Check if user is an admin using RPC function
+    const { data: isAdmin, error: adminError } = await supabase.rpc('is_admin');
       
-    if (!adminError && admin) {
+    if (!adminError && isAdmin) {
       return true; // User is an admin, allow access
     }
     
-    // Check if user is a lawyer for this firm
-    const { data: lawyer, error: lawyerError } = await supabase
-      .from('lawyers')
-      .select('*')
-      .eq('lawyer_id', userId)
-      .eq('firm_id', firm.firm_id)
-      .single();
+    // Check if user is a lawyer for this firm using RPC function
+    const { data: isLawyer, error: lawyerError } = await supabase.rpc('is_lawyer_for_firm', {
+      firm_uuid: firmId
+    });
     
-    return !lawyerError && !!lawyer;
+    return !lawyerError && isLawyer;
   } catch (error) {
     console.error("Access check error:", error);
     return false;
@@ -96,19 +86,6 @@ export async function checkUserHasAccess(userId: string, firmSlug: string): Prom
 
 export async function signupUserWithLawFirm(email: string, password: string, firmName: string, firmSlug: string) {
   try {
-    // Check if the firm slug is already taken
-    const { data: existingFirm, error: firmCheckError } = await supabase
-      .from('firms')
-      .select('firm_id')
-      .eq('slug', firmSlug)
-      .maybeSingle();
-      
-    if (firmCheckError) throw firmCheckError;
-    
-    if (existingFirm) {
-      throw new Error('This firm name is already taken. Please choose a different one.');
-    }
-    
     // Start signup process
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
@@ -146,12 +123,7 @@ export async function signupUserWithLawFirm(email: string, password: string, fir
 
 export async function isUserAdmin(userId: string): Promise<boolean> {
   try {
-    const { data, error } = await supabase
-      .from('admins')
-      .select('*')
-      .eq('admin_id', userId)
-      .maybeSingle();
-    
+    const { data, error } = await supabase.rpc('is_admin');
     return !error && !!data;
   } catch (error) {
     console.error("Admin check error:", error);
